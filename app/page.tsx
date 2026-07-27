@@ -19,7 +19,6 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [deletedTasks, setDeletedtasks] = useState<TaskItem[]>([]);
   const filters = ["All", "Active", "Completed", "Deleted"];
-  const count = tasks.le;
 
   function toggleTheme() {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
