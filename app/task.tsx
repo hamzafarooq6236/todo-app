@@ -15,7 +15,7 @@ export default function Task({ id, content, isChecked, editTask, handleChecked, 
     const [edit, setEdit] = useState(false);
 
     return (
-        <div className="text-black bg-white dark:text-white dark:bg-[#1E2939] flex items-center gap-2 rounded-5xl w-[26%] p-3 rounded-2xl">
+        <div className="text-black bg-white dark:text-white dark:bg-[#1E2939] flex items-center gap-2 rounded-5xl w-full p-3 rounded-2xl">
             <input type="checkbox" checked={isChecked} className="bg-white cursor-pointer" onChange={() => handleChecked(id)} />
             <label className={`wrap-anywhere ${isChecked ? "line-through" : ""}`} >{edit ? (<input type="text" autoFocus value={content} minLength={2} required onBlur={() => setEdit(!edit)} onChange={(e) => editTask(e, id)} />) : content} </label>
             <div className="flex items-center gap-2 ml-auto">

@@ -176,13 +176,14 @@ export default function Home() {
               Add
             </button>
           </form>
+          <div className="mt-4 w-[27%] mx-auto">
+            <div className=" flex gap-1 mt-2">
+              {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
+            </div>
 
-          <div className="flex justify-center items-center gap-1 mt-2">
-            {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
-          </div>
-
-          <div className="mt-4 flex flex-col items-center gap-2">
-            {filter(activeFilter)}
+            <div className="mt-4 flex flex-col items-center gap-2">
+              {filter(activeFilter)}
+            </div>
           </div>
         </div>
 
