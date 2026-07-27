@@ -18,6 +18,7 @@ export default function Home() {
   const [taskInput, setTaskInput] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [deletedTasks, setDeletedtasks] = useState<TaskItem[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const filters = ["All", "Active", "Completed", "Deleted"];
 
   function toggleTheme() {
@@ -40,13 +41,24 @@ export default function Home() {
   }
 
   function handleChecked(id: number) {
-    setTasks((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isChecked: !item.isChecked } : item
-      )
-    );
-  }
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
 
+    if (!task.isChecked) {
+      // Being completed now
+      setCompletedTasks((prev) => [...prev, id]);
+    } else {
+      // Being unchecked
+      setCompletedTasks((prev) =>
+        prev.filter((taskId) => taskId !== id)
+      );
+    }
+    setTasks((prev) => prev.map((item) =>
+      item.id === id
+        ? { ...item, isChecked: !item.isChecked }
+        : item
+    ));
+  }
   function deleteTask(id: number) {
     if (deletedTasks.find((item) => item.id === id)) {
       setDeletedtasks(deletedTasks.filter(item => item.id !== id))
@@ -55,6 +67,9 @@ export default function Home() {
       if (!deletedTask) return;
       setDeletedtasks((prev) => [...prev, deletedTask]);
       setTasks(tasks.filter(item => item.id !== id))
+      setCompletedTasks((prev) =>
+        prev.filter((num) => num !== id)
+      );
     }
 
   }
@@ -72,17 +87,29 @@ export default function Home() {
           deleteTask={deleteTask}
         />
       )))
+    } else if (fl == "Completed") {
+      const completed = completedTasks
+        .map((id) => tasks.find((task) => task.id === id))
+        .filter((task): task is TaskItem => task !== undefined);
+      return (completed.map((t) => (
+        <Tasks
+          key={t.id}
+          id={t.id}
+          content={t.task}
+          isChecked={t.isChecked}
+          editTask={editTask}
+          handleChecked={handleChecked}
+          deleteTask={deleteTask}
+        />
+      )))
     } else {
-
       return (
         <>
           {tasks
             .filter((item) =>
               fl === "Active"
                 ? !item.isChecked
-                : fl === "Completed"
-                  ? item.isChecked
-                  : true
+                : true
             )
             .map((t) => (
               <Tasks
@@ -180,7 +207,7 @@ export default function Home() {
               {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
             </div>
 
-            <div className="mt-4 flex flex-col items-center gap-2">
+            <div className="mt-4 overflow-y-auto scrollbar-thin h-[50vh] flex flex-col items-center gap-2">
               {filter(activeFilter)}
             </div>
           </div>
