@@ -1,8 +1,13 @@
 "use client";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function Sidebar() {
-    
+
+  const pathName = usePathname();
+  console.log(pathName);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   function toggleSideBar() {
     setIsSidebarOpen((prevState) => !prevState);
@@ -12,7 +17,7 @@ export default function Sidebar() {
       className={`
           bg-white dark:bg-[#1E2939]
           h-screen
-          fixed z-1000
+          fixed z-50
           flex flex-col
           transition-all duration-300
           overflow-hidden
@@ -53,30 +58,34 @@ export default function Sidebar() {
       />
 
       {/* My Tasks */}
-      <div className="flex items-center">
-        <img
-          src="/list-todo.svg"
-          alt="Tasks"
-          className="dark:invert px-4 py-3 w-13 min-w-15"
-        />
+      <Link href="/">
+        <div className={`flex mt-1 items-center ${pathName === "/" ? "bg-[#dee0e3] rounded-2xl" : ""}`}>
+          <img
+            src="/list-todo.svg"
+            alt="Tasks"
+            className="dark:invert px-4 py-3 w-13 min-w-15"
+          />
 
-        {isSidebarOpen && (
-          <h1 className="text-black dark:text-white font-bold">My Tasks</h1>
-        )}
-      </div>
+          {isSidebarOpen && (
+            <h1 className="text-black dark:text-white font-bold">My Tasks</h1>
+          )}
+        </div>
+      </Link>
 
       {/* Settings */}
-      <div className="flex items-center">
-        <img
-          src="/settings.svg"
-          alt="Settings"
-          className="dark:invert px-4 py-3 w-13 min-w-15"
-        />
+      <Link href="/Settings">
+        <div className={`flex items-center ${pathName === "/Settings" ? "bg-[#dee0e3] rounded-2xl" : ""}`}>
+          <img
+            src="/settings.svg"
+            alt="Settings"
+            className="dark:invert px-4 py-3 w-13 min-w-15"
+          />
 
-        {isSidebarOpen && (
-          <h1 className="text-black dark:text-white font-bold">Settings</h1>
-        )}
-      </div>
+          {isSidebarOpen && (
+            <h1 className="text-black dark:text-white font-bold">Settings</h1>
+          )}
+        </div>
+      </Link>
     </aside>
   );
 }
