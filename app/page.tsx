@@ -6,11 +6,21 @@ import { useTheme } from "next-themes";
 import Sidebar from "./sidebar";
 import Tasks from "./task"
 
+interface TaskItem {
+  id: number;
+  task: string;
+  isChecked: boolean
+}
+
 export default function Home() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [tasks, setTasks] = useState<string[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [taskInput, setTaskInput] = useState<string>("");
-  
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [deletedTasks, setDeletedtasks] = useState<TaskItem[]>([]);
+  const filters = ["All", "Active", "Completed", "Deleted"];
+  const count = tasks.le;
+
   function toggleTheme() {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }
@@ -18,11 +28,77 @@ export default function Home() {
   function handleAddTask(e: React.FormEvent) {
     e.preventDefault();
     if (!taskInput.trim()) return;
-    setTasks((prev) => [...prev, taskInput.trim()]);
+    setTasks((prev) => [...prev, { id: Date.now(), task: taskInput.trim(), isChecked: false }]);
     setTaskInput("");
   }
 
-  function filterAll(){
+  function editTask(e: React.ChangeEvent<HTMLInputElement>, id: number) {
+    e.preventDefault();
+    const newValue = e.target.value;
+    setTasks((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, task: newValue } : item))
+    );
+  }
+
+  function handleChecked(id: number) {
+    setTasks((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, isChecked: !item.isChecked } : item
+      )
+    );
+  }
+
+  function deleteTask(id: number) {
+    if (deletedTasks.find((item) => item.id === id)) {
+      setDeletedtasks(deletedTasks.filter(item => item.id !== id))
+    } else {
+      const deletedTask = tasks.find((item) => item.id === id);
+      if (!deletedTask) return;
+      setDeletedtasks((prev) => [...prev, deletedTask]);
+      setTasks(tasks.filter(item => item.id !== id))
+    }
+
+  }
+
+  function filter(fl: string) {
+    if (fl === "Deleted") {
+      return (deletedTasks.map((t) => (
+        <Tasks
+          key={t.id}
+          id={t.id}
+          content={t.task}
+          isChecked={t.isChecked}
+          editTask={editTask}
+          handleChecked={handleChecked}
+          deleteTask={deleteTask}
+        />
+      )))
+    } else {
+
+      return (
+        <>
+          {tasks
+            .filter((item) =>
+              fl === "Active"
+                ? !item.isChecked
+                : fl === "Completed"
+                  ? item.isChecked
+                  : true
+            )
+            .map((t) => (
+              <Tasks
+                key={t.id}
+                id={t.id}
+                content={t.task}
+                isChecked={t.isChecked}
+                editTask={editTask}
+                handleChecked={handleChecked}
+                deleteTask={deleteTask}
+              />
+            ))}
+        </>
+      );
+    }
   }
 
   return (
@@ -30,7 +106,7 @@ export default function Home() {
       <Sidebar />
 
       {/* Main */}
-      <main className="w-full min-h-screen flex flex-col gap-4 ">
+      <main className="w-full min-h-screen flex flex-col gap-4">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
@@ -56,7 +132,7 @@ export default function Home() {
               dark:rotate-0 dark:scale-100
             "
           />
-        </button> 
+        </button>
 
         {/* Heading */}
         <strong className="self-center text-4xl font-sans text-black dark:text-white">
@@ -101,17 +177,12 @@ export default function Home() {
             </button>
           </form>
 
-          {/* <div className="flex">
-            <button type="button" onClick={filterAll}>All</button>
-            <button type="button" onClick={filterActive}>Active</button>
-            <button type="button" onClick={filterCompleted}>Completed</button>
-            <button type="button" onClick={filterDeleted}>Deleted</button>
-          </div> */}
+          <div className="flex justify-center items-center gap-1 mt-2">
+            {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
+          </div>
 
           <div className="mt-4 flex flex-col items-center gap-2">
-            {tasks.map((task, index) => (
-              <Tasks key={index} content={task} />
-            ))}
+            {filter(activeFilter)}
           </div>
         </div>
 
