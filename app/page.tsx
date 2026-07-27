@@ -7,18 +7,20 @@ import Sidebar from "./components/sidebar";
 import Tasks from "./components/task"
 
 interface TaskItem {
-  id: number;
-  task: string;
-  isChecked: boolean
+  id: number,
+  task: string,
+  isChecked: boolean,
+  createdAt: number,
+  updatedAt: number,
+  deletedAt: number | null,
 }
 
 export default function Home() {
   const { resolvedTheme, setTheme } = useTheme();
+  
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [taskInput, setTaskInput] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState("All");
-  const [deletedTasks, setDeletedtasks] = useState<TaskItem[]>([]);
-  const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const filters = ["All", "Active", "Completed", "Deleted"];
 
   function toggleTheme() {
@@ -28,7 +30,7 @@ export default function Home() {
   function handleAddTask(e: React.FormEvent) {
     e.preventDefault();
     if (!taskInput.trim()) return;
-    setTasks((prev) => [...prev, { id: Date.now(), task: taskInput.trim(), isChecked: false }]);
+    setTasks((prev) => [...prev, { id: Date.now(), task: taskInput.trim(), isChecked: false, createdAt: Date.now(), updatedAt: Date.now(), deletedAt: null }]);
     setTaskInput("");
   }
 
@@ -42,41 +44,28 @@ export default function Home() {
 
   function handleChecked(id: number) {
     const task = tasks.find((item) => item.id === id);
-    if (!task) return;
-
-    if (!task.isChecked) {
-      // Being completed now
-      setCompletedTasks((prev) => [...prev, id]);
-    } else {
-      // Being unchecked
-      setCompletedTasks((prev) =>
-        prev.filter((taskId) => taskId !== id)
-      );
-    }
+    if (!task) return
+    //invert isChecked
     setTasks((prev) => prev.map((item) =>
       item.id === id
-        ? { ...item, isChecked: !item.isChecked }
+        ? { ...item, isChecked: !item.isChecked, updatedAt: Date.now() }
         : item
     ));
   }
   function deleteTask(id: number) {
-    if (deletedTasks.find((item) => item.id === id)) {
-      setDeletedtasks(deletedTasks.filter(item => item.id !== id))
+    if (tasks.find((item) => item.id === id)?.deletedAt !== null) {
+      setTasks((prev) => prev.filter((item) => item.id !== id));
     } else {
-      const deletedTask = tasks.find((item) => item.id === id);
-      if (!deletedTask) return;
-      setDeletedtasks((prev) => [...prev, deletedTask]);
-      setTasks(tasks.filter(item => item.id !== id))
-      setCompletedTasks((prev) =>
-        prev.filter((num) => num !== id)
-      );
+      setTasks(tasks.map((item) => item.id === id
+        ? { ...item, updatedAt: Date.now(), deletedAt: Date.now() }
+        : item));
     }
 
   }
 
   function filter(fl: string) {
     if (fl === "Deleted") {
-      return (deletedTasks.map((t) => (
+      return (tasks.filter((item) => item.deletedAt !== null).map((t) => (
         <Tasks
           key={t.id}
           id={t.id}
@@ -87,11 +76,9 @@ export default function Home() {
           deleteTask={deleteTask}
         />
       )))
-    } else if (fl == "Completed") {
-      const completed = completedTasks
-        .map((id) => tasks.find((task) => task.id === id))
-        .filter((task): task is TaskItem => task !== undefined);
-      return (completed.map((t) => (
+    } else if (fl === "Completed") {
+      const sorted = tasks.toSorted((a, b) => a.updatedAt - b.updatedAt);
+      return sorted.filter(item => item.isChecked === true).map((t) => (
         <Tasks
           key={t.id}
           id={t.id}
@@ -101,29 +88,35 @@ export default function Home() {
           handleChecked={handleChecked}
           deleteTask={deleteTask}
         />
-      )))
-    } else {
-      return (
-        <>
-          {tasks
-            .filter((item) =>
-              fl === "Active"
-                ? !item.isChecked
-                : true
-            )
-            .map((t) => (
-              <Tasks
-                key={t.id}
-                id={t.id}
-                content={t.task}
-                isChecked={t.isChecked}
-                editTask={editTask}
-                handleChecked={handleChecked}
-                deleteTask={deleteTask}
-              />
-            ))}
-        </>
+      ));
+    }
+    else if (fl === "Active") {
+      return (tasks
+        .filter((item) => item.isChecked === false)
+        .map((t) => (
+          <Tasks
+            key={t.id}
+            id={t.id}
+            content={t.task}
+            isChecked={t.isChecked}
+            editTask={editTask}
+            handleChecked={handleChecked}
+            deleteTask={deleteTask}
+          />
+        ))
       );
+    } else {
+      return (tasks.filter((item) => item.deletedAt === null).map((t) => (
+        <Tasks
+          key={t.id}
+          id={t.id}
+          content={t.task}
+          isChecked={t.isChecked}
+          editTask={editTask}
+          handleChecked={handleChecked}
+          deleteTask={deleteTask}
+        />
+      )));
     }
   }
 
