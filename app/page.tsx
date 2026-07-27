@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { useTheme } from "next-themes";
-import Sidebar from "./sidebar";
-import Tasks from "./task"
+import Sidebar from "./components/sidebar";
+import Tasks from "./components/task"
 
 interface TaskItem {
   id: number;
