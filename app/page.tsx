@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { useTheme } from "next-themes";
 import Sidebar from "./components/sidebar";
@@ -27,6 +27,28 @@ export default function Home() {
   }
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
+  useEffect(() => {
+    const saved = localStorage.getItem("tasks");
+    function isSafe(obj:any):obj is TaskItem{
+      return obj && typeof obj ==="object" && "id" in obj && "task" in obj && "isChecked" in obj && "createdAt" in obj && "updatedAt" in obj && "deletedAt" in obj}
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.every(isSafe)) {
+          setTasks(parsed);
+        }
+      } catch (error) {
+        console.error("Failed to parse tasks from localStorage:", error);
+      }
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+  }, [tasks]);
+
   const [taskInput, setTaskInput] = useState<string>("");
   const [isSearch, setIsSearch] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -80,17 +102,18 @@ export default function Home() {
   function restoreTask(id: number) {
     const task = tasks.find(item => item.id === id)?.deletedAt !== null;
     if (!task) { return; }
-    setTasks(tasks.map((item) => item.id ? { ...item, deletedAt: null } : item));
+    setTasks(tasks.map((item) => item.id === id ? { ...item, deletedAt: null } : item));
 
   }
 
 
   function filter(fl: string) {
     let finalTasks = [];
-    let temp=[];
-    isSearch? temp=searchedTasks:temp=tasks;
+    let temp = [];
+    isSearch ? temp = searchedTasks : temp = tasks;
     if (fl === "Deleted") {
-      finalTasks = temp.filter((item) => item.deletedAt !== null);
+      const sorted = temp.toSorted((a, b) => (a.deletedAt !== null && b.deletedAt !== null) ? a.deletedAt - b.deletedAt : 0);
+      finalTasks = sorted.filter((item) => item.deletedAt !== null);
 
     } else if (fl === "Completed") {
       const sorted = temp.toSorted((a, b) => a.updatedAt - b.updatedAt);
@@ -104,29 +127,31 @@ export default function Home() {
       finalTasks = temp.filter((item) => item.deletedAt === null);
     }
 
-    return (!isSearch? finalTasks.map((t) => (
+    return (!isSearch ? finalTasks.map((t) => (
       <Tasks
         key={t.id}
         id={t.id}
         content={t.task}
+        deletedAt={t.deletedAt}
         isChecked={t.isChecked}
         editTask={editTask}
         handleChecked={handleChecked}
         deleteTask={deleteTask}
         restoreTask={restoreTask}
       />
-    )):finalTasks.map((t) => (
-                    <Tasks
-                      key={t.id}
-                      id={t.id}
-                      content={t.task}
-                      isChecked={t.isChecked}
-                      editTask={editTask}
-                      handleChecked={handleChecked}
-                      deleteTask={deleteTask}
-                      restoreTask={restoreTask}
-                    />
-                  )));
+    )) : finalTasks.map((t) => (
+      <Tasks
+        key={t.id}
+        id={t.id}
+        content={t.task}
+        isChecked={t.isChecked}
+        deletedAt={t.deletedAt}
+        editTask={editTask}
+        handleChecked={handleChecked}
+        deleteTask={deleteTask}
+        restoreTask={restoreTask}
+      />
+    )));
   }
 
   return (
@@ -223,16 +248,16 @@ export default function Home() {
             </div>
           </form>
           {/*show tasks and serach results*/}
-            <div className="mt-4 w-[85vw] md:w-[27%] mx-auto ">
-              <div className=" flex gap-1 mt-2">
-                {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black dark:text-white" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
-              </div>
-             
-                <div className="mt-4 overflow-y-auto scrollbar-thin h-[35vh] md:h-[50vh] flex flex-col items-center gap-2">
-                  {filter(activeFilter)}
-                </div>
-             
+          <div className="mt-4 w-[85vw] md:w-[27%] mx-auto ">
+            <div className=" flex gap-1 mt-2">
+              {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black dark:text-white" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
             </div>
+
+            <div className="mt-4 overflow-y-auto scrollbar-thin h-[35vh] md:h-[50vh] flex flex-col items-center gap-2">
+              {filter(activeFilter)}
+            </div>
+
+          </div>
         </div>
 
         {/*footer*/}

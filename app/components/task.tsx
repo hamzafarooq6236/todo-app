@@ -7,13 +7,14 @@ interface TaskProps {
     id: number;
     content: string;
     isChecked: boolean;
+    deletedAt:number|null;
     editTask(e: React.ChangeEvent<HTMLInputElement>, id: number): void;
     handleChecked(id: number): void;
     deleteTask(id:number):void;
     restoreTask(id:number):void;
 }
 
-export default function Task({ id, content, isChecked, editTask, handleChecked, deleteTask, restoreTask }: TaskProps) {
+export default function Task({ id, content, isChecked, deletedAt, editTask, handleChecked, deleteTask, restoreTask }: TaskProps) {
     const [edit, setEdit] = useState(false);
 
     return (
@@ -23,7 +24,7 @@ export default function Task({ id, content, isChecked, editTask, handleChecked, 
             <div className="flex items-center gap-2 ml-auto">
                 <MdEdit className="dark:text-white cursor-pointer" onClick={() => { setEdit(!edit) }} />
                 <MdDelete className="dark:text-white cursor-pointer" onClick={()=>deleteTask(id)}/>
-                <MdOutlineRestore className="dark:text-white cursor-pointer" onClick={()=>restoreTask(id)}/>
+                <MdOutlineRestore className={`dark:text-white cursor-pointer ${deletedAt===null?"hidden":""}`} onClick={()=>restoreTask(id)}/>
             </div>
         </div>
     )
