@@ -2,39 +2,24 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import { IoClose } from "react-icons/io5";
 
-export default function Sidebar() {
+interface SidebarProps {
+  isSidebarOpen: boolean;
+  toggleSideBar: () => void;
+}
+
+export default function Sidebar({ isSidebarOpen, toggleSideBar }: SidebarProps) {
 
   const pathName = usePathname();
   console.log(pathName);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  function toggleSideBar() {
-    setIsSidebarOpen((prevState) => !prevState);
-  }
+  
   return (
-    <aside
-      className={`
-          bg-white dark:bg-[#1E2939]
-          h-screen
-          fixed z-50
-          flex flex-col
-          transition-all duration-300
-          overflow-hidden
-          ${isSidebarOpen ? "w-60" : "w-15"}
-        `}
-    >
+    <aside className={` bg-white dark:bg-[#1E2939] h-screen fixed z-50 flex flex-col transition-all overflow-hidden ${isSidebarOpen ? "w-[60vw] md:w-[15vw]" : " w-0 md:w-15"} `} >
       {/* Menu */}
-      <img
-        src="/menu.svg"
-        alt="Menu"
-        onClick={toggleSideBar}
-        className={`
-            menu
-            dark:invert
-            ${isSidebarOpen ? "pl-4 pt-3 w-13" : "px-4 py-3 w-13 min-w-15"}
-          `}
-      />
+      <img src="/menu.svg" alt="Menu" onClick={toggleSideBar} className={` menu dark:invert ${isSidebarOpen ? "hidden pl-4 pt-3 w-13" : "px-4 py-3 w-13 min-w-15"} `} />
+      <IoClose className={`text-black ${isSidebarOpen?"ml-2 h-8":"hidden"}`} onClick={toggleSideBar}/>
 
       {/* User Profile */}
       {isSidebarOpen && (
@@ -47,15 +32,7 @@ export default function Sidebar() {
         </div>
       )}
 
-      <hr
-        className={`
-            w-[80%]
-            border-t
-            border-gray-500
-            dark:border-gray-600
-            ${isSidebarOpen ? "self-center" : "self-center"}
-          `}
-      />
+      <hr className={` w-[80%] border-t border-gray-500 dark:border-gray-600 ${isSidebarOpen ? "self-center" : "self-center"} `} />
 
       {/* My Tasks */}
       <Link href="/">

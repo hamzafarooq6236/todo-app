@@ -7,7 +7,8 @@ import Sidebar from "./components/sidebar";
 import Tasks from "./components/task"
 import { IoSearch } from "react-icons/io5";
 import { IoAdd } from "react-icons/io5";
-import Task from "./components/task";
+// import Task from "./components/task";
+import { TiThMenu } from "react-icons/ti";
 
 interface TaskItem {
   id: number,
@@ -20,6 +21,10 @@ interface TaskItem {
 
 export default function Home() {
   const { resolvedTheme, setTheme } = useTheme();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  function toggleSideBar() {
+    setIsSidebarOpen((prevState) => !prevState);
+  }
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [taskInput, setTaskInput] = useState<string>("");
@@ -27,7 +32,7 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState("All");
   const filters = ["All", "Active", "Completed", "Deleted"];
   const [searchInput, setSearchInput] = useState("");
-  const searchedTasks = tasks.filter((item) => item.deletedAt === null && item.task.toLowerCase().includes(searchInput.toLowerCase()) );
+  const searchedTasks = tasks.filter((item) => item.deletedAt === null && item.task.toLowerCase().includes(searchInput.toLowerCase()));
 
   function toggleTheme() {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
@@ -82,22 +87,24 @@ export default function Home() {
 
   function filter(fl: string) {
     let finalTasks = [];
+    let temp=[];
+    isSearch? temp=searchedTasks:temp=tasks;
     if (fl === "Deleted") {
-      finalTasks = tasks.filter((item) => item.deletedAt !== null);
+      finalTasks = temp.filter((item) => item.deletedAt !== null);
 
     } else if (fl === "Completed") {
-      const sorted = tasks.toSorted((a, b) => a.updatedAt - b.updatedAt);
+      const sorted = temp.toSorted((a, b) => a.updatedAt - b.updatedAt);
       finalTasks = sorted.filter(item => item.isChecked === true && item.deletedAt === null);
 
     }
     else if (fl === "Active") {
-      finalTasks = tasks.filter((item) => item.isChecked === false && item.deletedAt === null)
+      finalTasks = temp.filter((item) => item.isChecked === false && item.deletedAt === null)
 
     } else {
-      finalTasks = tasks.filter((item) => item.deletedAt === null);
+      finalTasks = temp.filter((item) => item.deletedAt === null);
     }
 
-    return (finalTasks.map((t) => (
+    return (!isSearch? finalTasks.map((t) => (
       <Tasks
         key={t.id}
         id={t.id}
@@ -108,51 +115,64 @@ export default function Home() {
         deleteTask={deleteTask}
         restoreTask={restoreTask}
       />
-    )));
+    )):finalTasks.map((t) => (
+                    <Tasks
+                      key={t.id}
+                      id={t.id}
+                      content={t.task}
+                      isChecked={t.isChecked}
+                      editTask={editTask}
+                      handleChecked={handleChecked}
+                      deleteTask={deleteTask}
+                      restoreTask={restoreTask}
+                    />
+                  )));
   }
 
   return (
     <div className="min-h-screen flex bg-[#F3F4F6] dark:bg-[#101828]">
-      <Sidebar />
+
+      <Sidebar isSidebarOpen={isSidebarOpen} toggleSideBar={toggleSideBar} />
 
       {/* Main */}
       <main className="w-full min-h-screen flex flex-col gap-4">
-
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="relative flex self-end items-center justify-center h-8 w-8 mr-1 rounded-full  shadow-md transition-all hover:scale-110 text-black dark:text-white "
-          aria-label="Toggle theme"
-        >
-          <FaSun
-            className="
+        <div className="flex justify-between">
+          <button className="text-black p-3" onClick={() => setIsSidebarOpen(true)}><TiThMenu className="" /></button>
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="relative flex self-end items-center justify-center h-8 w-8 mr-1 rounded-full  shadow-md transition-all hover:scale-110 text-black dark:text-white "
+            aria-label="Toggle theme"
+          >
+            <FaSun
+              className="
               absolute
               h-6 w-6
               scale-100
               transition-all
               dark:rotate-0 dark:scale-0
             "
-          />
+            />
 
-          <FaMoon
-            className="
+            <FaMoon
+              className="
               absolute
               h-6 w-6
               scale-0
               transition-all
               dark:rotate-0 dark:scale-100
             "
-          />
-        </button>
-
+            />
+          </button>
+        </div>
         {/* Heading */}
         <strong className="self-center text-4xl font-sans text-black dark:text-white">
           My Tasks
         </strong>
 
-        <div>
+        <div className="flex flex-col justify-center">
           {/* Task Input */}
-          <form onSubmit={handleAddSearch} className="flex gap-4 justify-center">
+          <form onSubmit={handleAddSearch} className="flex flex-col md:flex-row gap-4 items-center justify-center">
             <input
               type="text"
               autoFocus
@@ -163,7 +183,8 @@ export default function Home() {
               text-black dark:text-white
               placeholder-[#A9A9A9]
               rounded-2xl
-              w-[20%]
+              w-[95vw]
+              md:w-[20%]
               pl-4 pr-2 py-2
               outline-none
             `}
@@ -181,7 +202,8 @@ export default function Home() {
               text-black dark:text-white
               placeholder-[#A9A9A9]
               rounded-2xl
-              w-[20%]
+              w-[95vw]
+              md:w-[20%]
               pl-4 pr-2 py-2
               outline-none
             `}
@@ -189,43 +211,28 @@ export default function Home() {
                 setSearchInput(e.target.value);
               }}
             />
-            <button type="submit" onClick={() => setIsSearch(false)} className={`flex items-center transition-all ${isSearch ? "text-black bg-white" : "text-white bg-black"} dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer `}>
-              <IoAdd />
-              Add
-            </button>
-            <button type="button" onClick={() => setIsSearch(true)} className={`flex items-center transition-all ${isSearch ? "text-white bg-black" : "text-black bg-white"} dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer `}>
-              <IoSearch />
-              Search
-            </button>
+            <div className="flex gap-2">
+              <button type="submit" onClick={() => setIsSearch(false)} className={`flex gap-1 w-25 md:w-25 items-center justify-center transition-all ${isSearch ? "bg-white text-black dark:bg-[#374151] dark:text-gray-300" : "bg-black text-white dark:bg-blue-600 dark:text-white"} rounded-2xl py-2 cursor-pointer `}>
+                <IoAdd />
+                Add
+              </button>
+              <button type="button" onClick={() => setIsSearch(true)} className={`flex gap-1 w-25 md:w-25 items-center justify-center transition-all ${isSearch ? "bg-black text-white dark:bg-blue-600 dark:text-white" : "bg-white text-black dark:bg-[#374151] dark:text-gray-300"} rounded-2xl py-2 cursor-pointer `}>
+                <IoSearch />
+                Search
+              </button>
+            </div>
           </form>
-
-          {!isSearch ? (
-            <div className="mt-4 w-[27%] mx-auto">
+          {/*show tasks and serach results*/}
+            <div className="mt-4 w-[85vw] md:w-[27%] mx-auto ">
               <div className=" flex gap-1 mt-2">
-                {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
+                {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black dark:text-white" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
               </div>
-
-              <div className="mt-4 overflow-y-auto scrollbar-thin h-[50vh] flex flex-col items-center gap-2">
-                {filter(activeFilter)}
-              </div>
+             
+                <div className="mt-4 overflow-y-auto scrollbar-thin h-[35vh] md:h-[50vh] flex flex-col items-center gap-2">
+                  {filter(activeFilter)}
+                </div>
+             
             </div>
-          ) : (
-            <div className="mt-4 w-[27%] mx-auto overflow-y-auto h-[50vh] flex flex-col items-center gap-2">
-              {searchedTasks.map((t) => (
-                <Tasks
-                  key={t.id}
-                  id={t.id}
-                  content={t.task}
-                  isChecked={t.isChecked}
-                  editTask={editTask}
-                  handleChecked={handleChecked}
-                  deleteTask={deleteTask}
-                  restoreTask={restoreTask}
-                />
-              ))}
-            </div>
-          )}
-
         </div>
 
         {/*footer*/}
