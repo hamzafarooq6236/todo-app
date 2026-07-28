@@ -5,6 +5,7 @@ import { FaMoon, FaSun } from "react-icons/fa";
 import { useTheme } from "next-themes";
 import Sidebar from "./components/sidebar";
 import Tasks from "./components/task"
+import { IoSearch } from "react-icons/io5";
 
 interface TaskItem {
   id: number,
@@ -52,6 +53,7 @@ export default function Home() {
         : item
     ));
   }
+
   function deleteTask(id: number) {
     if (tasks.find((item) => item.id === id)?.deletedAt !== null) {
       setTasks((prev) => prev.filter((item) => item.id !== id));
@@ -63,50 +65,32 @@ export default function Home() {
 
   }
 
+  function restoreTask(id:number){
+    const task = tasks.find(item=>item.id===id)?.deletedAt!==null;
+    if(!task){return;} 
+    setTasks(tasks.map((item)=>item.id? { ...item, deletedAt: null }: item));
+  
+  }
+
+
   function filter(fl: string) {
+    let finalTasks=[];
     if (fl === "Deleted") {
-      return (tasks.filter((item) => item.deletedAt !== null).map((t) => (
-        <Tasks
-          key={t.id}
-          id={t.id}
-          content={t.task}
-          isChecked={t.isChecked}
-          editTask={editTask}
-          handleChecked={handleChecked}
-          deleteTask={deleteTask}
-        />
-      )))
+      finalTasks = tasks.filter((item) => item.deletedAt !== null);
+
     } else if (fl === "Completed") {
       const sorted = tasks.toSorted((a, b) => a.updatedAt - b.updatedAt);
-      return sorted.filter(item => item.isChecked === true).map((t) => (
-        <Tasks
-          key={t.id}
-          id={t.id}
-          content={t.task}
-          isChecked={t.isChecked}
-          editTask={editTask}
-          handleChecked={handleChecked}
-          deleteTask={deleteTask}
-        />
-      ));
+      finalTasks = sorted.filter(item => item.isChecked === true && item.deletedAt===null);
+
     }
     else if (fl === "Active") {
-      return (tasks
-        .filter((item) => item.isChecked === false)
-        .map((t) => (
-          <Tasks
-            key={t.id}
-            id={t.id}
-            content={t.task}
-            isChecked={t.isChecked}
-            editTask={editTask}
-            handleChecked={handleChecked}
-            deleteTask={deleteTask}
-          />
-        ))
-      );
+      finalTasks = tasks.filter((item) => item.isChecked === false && item.deletedAt===null)
+    
     } else {
-      return (tasks.filter((item) => item.deletedAt === null).map((t) => (
+      finalTasks = tasks.filter((item) => item.deletedAt === null);
+    }
+
+    return ( finalTasks.map((t) => (
         <Tasks
           key={t.id}
           id={t.id}
@@ -115,9 +99,9 @@ export default function Home() {
           editTask={editTask}
           handleChecked={handleChecked}
           deleteTask={deleteTask}
+          restoreTask={restoreTask}
         />
       )));
-    }
   }
 
   return (
@@ -126,6 +110,7 @@ export default function Home() {
 
       {/* Main */}
       <main className="w-full min-h-screen flex flex-col gap-4">
+
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
@@ -180,21 +165,16 @@ export default function Home() {
               }}
             />
 
-            <button
-              type="submit"
-              className="
-              text-white
-              bg-black
-              dark:bg-[#4A5565]
-              dark:text-white
-              rounded-2xl
-              px-7 py-2
-              cursor-pointer
-            "
-            >
+            <button type="submit" className=" text-white bg-black dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer ">
               Add
             </button>
+            <button type="submit" className=" text-white bg-black dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer ">
+              <IoSearch/>
+              Search
+            </button>
           </form>
+
+          {/* filters and tasks list*/}
           <div className="mt-4 w-[27%] mx-auto">
             <div className=" flex gap-1 mt-2">
               {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
@@ -204,6 +184,7 @@ export default function Home() {
               {filter(activeFilter)}
             </div>
           </div>
+          
         </div>
 
         {/*footer*/}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MdDelete } from "react-icons/md";
 import { MdEdit } from "react-icons/md";
+import { MdOutlineRestore } from "react-icons/md";
 
 interface TaskProps {
     id: number;
@@ -9,9 +10,10 @@ interface TaskProps {
     editTask(e: React.ChangeEvent<HTMLInputElement>, id: number): void;
     handleChecked(id: number): void;
     deleteTask(id:number):void;
+    restoreTask(id:number):void;
 }
 
-export default function Task({ id, content, isChecked, editTask, handleChecked, deleteTask }: TaskProps) {
+export default function Task({ id, content, isChecked, editTask, handleChecked, deleteTask, restoreTask }: TaskProps) {
     const [edit, setEdit] = useState(false);
 
     return (
@@ -21,6 +23,7 @@ export default function Task({ id, content, isChecked, editTask, handleChecked, 
             <div className="flex items-center gap-2 ml-auto">
                 <MdEdit className="dark:text-white cursor-pointer" onClick={() => { setEdit(!edit) }} />
                 <MdDelete className="dark:text-white cursor-pointer" onClick={()=>deleteTask(id)}/>
+                <MdOutlineRestore className="dark:text-white cursor-pointer" onClick={()=>restoreTask(id)}/>
             </div>
         </div>
     )
