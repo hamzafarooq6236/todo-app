@@ -29,8 +29,35 @@ export default function Home() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   useEffect(() => {
     const saved = localStorage.getItem("tasks");
-    function isSafe(obj:any):obj is TaskItem{
-      return obj && typeof obj ==="object" && "id" in obj && "task" in obj && "isChecked" in obj && "createdAt" in obj && "updatedAt" in obj && "deletedAt" in obj}
+    function isSafe(obj: any): obj is TaskItem {
+      if (!obj || typeof obj !== "object") {
+        return false;
+      }
+
+      const checks = {
+        id: "number",
+        task: "string",
+        isChecked: "boolean",
+        createdAt: "number",
+        updatedAt: "number",
+      };
+
+      for (const key in checks) {
+        if (typeof obj[key] !== checks[key as keyof typeof checks]) {
+          return false;
+        }
+      }
+
+      if (
+        typeof obj.deletedAt !== "number" &&
+        obj.deletedAt !== null
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
