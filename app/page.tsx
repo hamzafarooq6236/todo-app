@@ -6,6 +6,8 @@ import { useTheme } from "next-themes";
 import Sidebar from "./components/sidebar";
 import Tasks from "./components/task"
 import { IoSearch } from "react-icons/io5";
+import { IoAdd } from "react-icons/io5";
+import Task from "./components/task";
 
 interface TaskItem {
   id: number,
@@ -18,21 +20,26 @@ interface TaskItem {
 
 export default function Home() {
   const { resolvedTheme, setTheme } = useTheme();
-  
+
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [taskInput, setTaskInput] = useState<string>("");
+  const [isSearch, setIsSearch] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const filters = ["All", "Active", "Completed", "Deleted"];
+  const [searchInput, setSearchInput] = useState("");
+  const searchedTasks = tasks.filter((item) => item.deletedAt === null && item.task.toLowerCase().includes(searchInput.toLowerCase()) );
 
   function toggleTheme() {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }
 
-  function handleAddTask(e: React.FormEvent) {
+  function handleAddSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!taskInput.trim()) return;
-    setTasks((prev) => [...prev, { id: Date.now(), task: taskInput.trim(), isChecked: false, createdAt: Date.now(), updatedAt: Date.now(), deletedAt: null }]);
-    setTaskInput("");
+    if (!isSearch) {
+      if (!taskInput.trim()) return;
+      setTasks((prev) => [...prev, { id: Date.now(), task: taskInput.trim(), isChecked: false, createdAt: Date.now(), updatedAt: Date.now(), deletedAt: null }]);
+      setTaskInput("");
+    }
   }
 
   function editTask(e: React.ChangeEvent<HTMLInputElement>, id: number) {
@@ -65,43 +72,43 @@ export default function Home() {
 
   }
 
-  function restoreTask(id:number){
-    const task = tasks.find(item=>item.id===id)?.deletedAt!==null;
-    if(!task){return;} 
-    setTasks(tasks.map((item)=>item.id? { ...item, deletedAt: null }: item));
-  
+  function restoreTask(id: number) {
+    const task = tasks.find(item => item.id === id)?.deletedAt !== null;
+    if (!task) { return; }
+    setTasks(tasks.map((item) => item.id ? { ...item, deletedAt: null } : item));
+
   }
 
 
   function filter(fl: string) {
-    let finalTasks=[];
+    let finalTasks = [];
     if (fl === "Deleted") {
       finalTasks = tasks.filter((item) => item.deletedAt !== null);
 
     } else if (fl === "Completed") {
       const sorted = tasks.toSorted((a, b) => a.updatedAt - b.updatedAt);
-      finalTasks = sorted.filter(item => item.isChecked === true && item.deletedAt===null);
+      finalTasks = sorted.filter(item => item.isChecked === true && item.deletedAt === null);
 
     }
     else if (fl === "Active") {
-      finalTasks = tasks.filter((item) => item.isChecked === false && item.deletedAt===null)
-    
+      finalTasks = tasks.filter((item) => item.isChecked === false && item.deletedAt === null)
+
     } else {
       finalTasks = tasks.filter((item) => item.deletedAt === null);
     }
 
-    return ( finalTasks.map((t) => (
-        <Tasks
-          key={t.id}
-          id={t.id}
-          content={t.task}
-          isChecked={t.isChecked}
-          editTask={editTask}
-          handleChecked={handleChecked}
-          deleteTask={deleteTask}
-          restoreTask={restoreTask}
-        />
-      )));
+    return (finalTasks.map((t) => (
+      <Tasks
+        key={t.id}
+        id={t.id}
+        content={t.task}
+        isChecked={t.isChecked}
+        editTask={editTask}
+        handleChecked={handleChecked}
+        deleteTask={deleteTask}
+        restoreTask={restoreTask}
+      />
+    )));
   }
 
   return (
@@ -145,13 +152,13 @@ export default function Home() {
 
         <div>
           {/* Task Input */}
-          <form onSubmit={handleAddTask} className="flex gap-4 justify-center">
+          <form onSubmit={handleAddSearch} className="flex gap-4 justify-center">
             <input
               type="text"
               autoFocus
               value={taskInput}
               placeholder="Type your task here..."
-              className="
+              className={` ${isSearch ? "hidden" : ""}
               bg-white dark:bg-[#4A5565]
               text-black dark:text-white
               placeholder-[#A9A9A9]
@@ -159,32 +166,66 @@ export default function Home() {
               w-[20%]
               pl-4 pr-2 py-2
               outline-none
-            "
+            `}
               onChange={(e) => {
                 setTaskInput(e.target.value);
               }}
             />
-
-            <button type="submit" className=" text-white bg-black dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer ">
+            <input
+              type="text"
+              autoFocus
+              value={searchInput}
+              placeholder="Type your task here..."
+              className={` ${isSearch ? "" : "hidden"}
+              bg-white dark:bg-[#4A5565]
+              text-black dark:text-white
+              placeholder-[#A9A9A9]
+              rounded-2xl
+              w-[20%]
+              pl-4 pr-2 py-2
+              outline-none
+            `}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+              }}
+            />
+            <button type="submit" onClick={() => setIsSearch(false)} className={`flex items-center transition-all ${isSearch ? "text-black bg-white" : "text-white bg-black"} dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer `}>
+              <IoAdd />
               Add
             </button>
-            <button type="submit" className=" text-white bg-black dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer ">
-              <IoSearch/>
+            <button type="button" onClick={() => setIsSearch(true)} className={`flex items-center transition-all ${isSearch ? "text-white bg-black" : "text-black bg-white"} dark:bg-[#4A5565] dark:text-white rounded-2xl px-7 py-2 cursor-pointer `}>
+              <IoSearch />
               Search
             </button>
           </form>
 
-          {/* filters and tasks list*/}
-          <div className="mt-4 w-[27%] mx-auto">
-            <div className=" flex gap-1 mt-2">
-              {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
-            </div>
+          {!isSearch ? (
+            <div className="mt-4 w-[27%] mx-auto">
+              <div className=" flex gap-1 mt-2">
+                {filters.map((f, index) => (<button key={index} className={` pr-1 cursor-pointer ${f === activeFilter ? "text-black" : "text-[#6A7282]"} ${f === "Deleted" ? "" : "border-r border-black-200"} `} onClick={() => setActiveFilter(f)}>{f}</button>))}
+              </div>
 
-            <div className="mt-4 overflow-y-auto scrollbar-thin h-[50vh] flex flex-col items-center gap-2">
-              {filter(activeFilter)}
+              <div className="mt-4 overflow-y-auto scrollbar-thin h-[50vh] flex flex-col items-center gap-2">
+                {filter(activeFilter)}
+              </div>
             </div>
-          </div>
-          
+          ) : (
+            <div className="mt-4 w-[27%] mx-auto overflow-y-auto h-[50vh] flex flex-col items-center gap-2">
+              {searchedTasks.map((t) => (
+                <Tasks
+                  key={t.id}
+                  id={t.id}
+                  content={t.task}
+                  isChecked={t.isChecked}
+                  editTask={editTask}
+                  handleChecked={handleChecked}
+                  deleteTask={deleteTask}
+                  restoreTask={restoreTask}
+                />
+              ))}
+            </div>
+          )}
+
         </div>
 
         {/*footer*/}
